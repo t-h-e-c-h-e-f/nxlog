@@ -1,0 +1,2 @@
+# nxlog
+NXLog Configurations
