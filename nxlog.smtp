@@ -1,0 +1,51 @@
+## Please set the ROOT to the folder your nxlog was installed into,
+## otherwise it will not start.
+  
+#define ROOT C:\Program Files\nxlog
+define ROOT C:\Program Files (x86)\nxlog
+  
+Moduledir %ROOT%\modules
+CacheDir %ROOT%\data
+Pidfile %ROOT%\data\nxlog.pid
+SpoolDir %ROOT%\data
+LogFile %ROOT%\data\nxlog.log
+  
+<Extension json>
+    Module      xm_json
+</Extension>
+  
+# Nxlog internal logs
+<Input internal>
+   Module im_internal
+   Exec $EventReceivedTime = integer($EventReceivedTime) / 1000000; to_json();
+</Input>
+  
+ 
+# Create the parse rule for IIS logs. You can copy these from the header of the IIS log file.
+#<Extension w3c>
+#    Module xm_csv
+#    Fields $date, $time, $c-ip, $s-sitename, $s-computername, $s-ip, $cs-method, $cs-uri-stem, $cs-uri-query, $cs-host
+#    FieldTypes string, string, string, string, string, string, string, string, string, string
+#    Delimiter ' '
+#    QuoteChar '"'
+#    EscapeControl FALSE
+#    UndefValue -
+#</Extension>
+ 
+# Convert the IIS logs to JSON and use the original event time
+<Input smtp>  
+      Module    im_file
+      File    "C:\\Windows\\System32\\LogFiles\\SMTPSVC1\\ex*.log"
+    ReadFromLast True
+    SavePos True
+    Exec    if $raw_event =~ /^#/ drop();
+</Input>  
+<Output out_smtp>  
+    Module  om_tcp
+    Host    10.202.120.201
+    Port    3025
+    OutputType  LineBased
+</Output>  
+<Route 1>  
+    Path  smtp => out_smtp
+</Route>  

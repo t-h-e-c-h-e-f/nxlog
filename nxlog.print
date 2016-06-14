@@ -1,0 +1,44 @@
+## Please set the ROOT to the folder your nxlog was installed into,
+## otherwise it will not start.
+  
+#define ROOT C:\Program Files\nxlog
+define ROOT C:\Program Files (x86)\nxlog
+  
+Moduledir %ROOT%\modules
+CacheDir %ROOT%\data
+Pidfile %ROOT%\data\nxlog.pid
+SpoolDir %ROOT%\data
+LogFile %ROOT%\data\nxlog.log
+  
+<Extension json>
+    Module      xm_json
+</Extension>
+  
+# Nxlog internal logs
+<Input internal>
+   Module im_internal
+   Exec $EventReceivedTime = integer($EventReceivedTime) / 1000000; to_json();
+</Input>
+  
+ 
+# Windows Event Log
+<Input eventlog>
+# Uncomment im_msvistalog for Windows Vista/2008 and later
+   Module im_msvistalog
+Query <QueryList>\
+<Query Id="0">\
+<Select Path="PrintService">*</Select>\
+</Query>\
+</QueryList>
+Exec $EventReceivedTime = integer($EventReceivedTime) / 1000000; to_json();
+</Input>
+ 
+<Output out>
+   Module om_udp
+   Host 10.202.120.201
+   Port 1515
+</Output>
+ 
+<Route 1>
+   Path internal, eventlog => out
+</Route>
